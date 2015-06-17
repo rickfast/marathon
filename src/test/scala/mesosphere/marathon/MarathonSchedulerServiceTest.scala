@@ -12,6 +12,7 @@ import com.twitter.common.zookeeper.Group.JoinException
 import com.twitter.common.zookeeper.{ Candidate, Group }
 import mesosphere.chaos.http.HttpConf
 import mesosphere.marathon.Protos.StorageVersion
+import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.health.HealthCheckManager
 import mesosphere.marathon.metrics.Metrics
 import mesosphere.marathon.state.{ MarathonStore, AppRepository, Migration }
@@ -66,6 +67,7 @@ class MarathonSchedulerServiceTest
   import system.dispatcher
 
   var probe: TestProbe = _
+  var leadershipCoordinator: LeadershipCoordinator = _
   var healthCheckManager: HealthCheckManager = _
   var candidate: Option[Candidate] = _
   var config: MarathonConf = _
@@ -81,6 +83,7 @@ class MarathonSchedulerServiceTest
 
   before {
     probe = TestProbe()
+    leadershipCoordinator = mock[LeadershipCoordinator]
     healthCheckManager = mock[HealthCheckManager]
     candidate = mock[Option[Candidate]]
     config = mockConfig
@@ -107,6 +110,7 @@ class MarathonSchedulerServiceTest
     when(frameworkIdUtil.fetch()).thenReturn(None)
 
     val schedulerService = new MarathonSchedulerService(
+      leadershipCoordinator,
       healthCheckManager,
       candidate,
       config,
@@ -137,6 +141,7 @@ class MarathonSchedulerServiceTest
     when(frameworkIdUtil.fetch()).thenReturn(None)
 
     val schedulerService = new MarathonSchedulerService(
+      leadershipCoordinator,
       healthCheckManager,
       candidate,
       config,
@@ -167,6 +172,7 @@ class MarathonSchedulerServiceTest
     when(frameworkIdUtil.fetch()).thenReturn(None)
 
     val schedulerService = new MarathonSchedulerService(
+      leadershipCoordinator,
       healthCheckManager,
       candidate,
       config,
@@ -205,6 +211,7 @@ class MarathonSchedulerServiceTest
     frameworkIdUtil = new FrameworkIdUtil(store, Duration.Inf)
 
     val schedulerService = new MarathonSchedulerService(
+      leadershipCoordinator,
       healthCheckManager,
       candidate,
       config,
@@ -235,6 +242,7 @@ class MarathonSchedulerServiceTest
     candidate = Some(mock[Candidate])
 
     val schedulerService = new MarathonSchedulerService(
+      leadershipCoordinator,
       healthCheckManager,
       candidate,
       config,
@@ -272,6 +280,7 @@ class MarathonSchedulerServiceTest
     val driverFactory = mock[SchedulerDriverFactory]
 
     val schedulerService = new MarathonSchedulerService(
+      leadershipCoordinator,
       healthCheckManager,
       candidate,
       config,

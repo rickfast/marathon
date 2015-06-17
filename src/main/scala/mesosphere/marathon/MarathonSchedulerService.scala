@@ -16,6 +16,7 @@ import com.twitter.common.zookeeper.Candidate.Leader
 import com.twitter.common.zookeeper.Group.JoinException
 import mesosphere.marathon.MarathonSchedulerActor._
 import mesosphere.marathon.Protos.MarathonTask
+import mesosphere.marathon.core.leadership.LeadershipCoordinator
 import mesosphere.marathon.event.{ EventModule, LocalLeadershipEvent }
 import mesosphere.marathon.health.HealthCheckManager
 import mesosphere.marathon.state.{ AppDefinition, AppRepository, Migration, PathId, Timestamp }
@@ -38,6 +39,7 @@ import scala.util.{ Failure, Success }
   * Wrapper class for the scheduler
   */
 class MarathonSchedulerService @Inject() (
+    leadershipCoordinator: LeadershipCoordinator,
     healthCheckManager: HealthCheckManager,
     @Named(ModuleNames.NAMED_CANDIDATE) candidate: Option[Candidate],
     config: MarathonConf,
@@ -293,6 +295,8 @@ class MarathonSchedulerService @Inject() (
   private def electLeadership(abdicateOption: Option[ExceptionalCommand[JoinException]]): Unit = {
     log.info("Elect leadership")
 
+    Await.result(leadershipCoordinator.prepareForStart(), 10.seconds)
+
     // We have been elected as leader. Thus, update leadership and run the driver.
     leader.set(true)
     runDriver(abdicateOption)
@@ -305,6 +309,8 @@ class MarathonSchedulerService @Inject() (
 
   def abdicateLeadership(): Unit = {
     log.info("Abdicating")
+
+    leadershipCoordinator.stop()
 
     // To abdicate we defeat our leadership
     defeatLeadership()
